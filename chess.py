@@ -1,10 +1,10 @@
 import numpy as np
 class Piece():
-    def __init__(self, c, l):
+    def __init__(self, color, location):
         # c is a boolean. True means white. False means black.
         # l is a tuple that represents the indices of the piece in board.
-        self.color = c
-        self.location = l
+        self.color = color
+        self.location = location
 
     def all_moves(self, b):  # b is a Board type
         return []
@@ -26,11 +26,40 @@ class Pawn(Piece):
                     m.append(p)
             except IndexError:
                 pass
+            try:
+                if type(board[r+1][f+1]) == Piece and not board[r+1][f+1].color:
+                    p = np.copy(b)
+                    p[r][f] = None
+                    p[r+1][f+1] = Pawn(self.color, (r+1, f+1))
+                    m.append(p)
+            except IndexError:
+                pass
+        else:
+            try:
+                if type(board[r-1][f-1]) == Piece and not board[r-1][f-1].color:
+                    p = np.copy(b)
+                    p[r][f] = None
+                    p[r-1][f-1] = Pawn(self.color, (r-1, f-1))
+                    m.append(p)
+            except IndexError:
+                pass
+            try:
+                if type(board[r-1][f+1]) == Piece and not board[r-1][f+1].color:
+                    p = np.copy(b)
+                    p[r][f] = None
+                    p[r-1][f+1] = Pawn(self.color, (r-1, f+1))
+                    m.append(p)
+            except IndexError:
+                pass
+
         return np.array(m)
 
 class Rook(Piece):
     def all_moves(self, b):
         m = []
+        r, f = self.location
+        board = b.board
+        
         return m
 
 class Bishop(Piece):
