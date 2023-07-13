@@ -51,7 +51,6 @@ class Pawn(Piece):
                     m.append(p)
             except IndexError:
                 pass
-
         return np.array(m)
 
 class Rook(Piece):
@@ -83,7 +82,7 @@ class Rook(Piece):
                 p.board[r][i] = Rook(self.color, (r, i))
                 p.board[r][f] = None
                 m.append(p)
-        for i in range(r+1, 8):
+        for i in range(f+1, 8):
             if type(board[r][i]) == Piece and board[r][i].color is self.color:
                 break
             else:
@@ -96,7 +95,41 @@ class Rook(Piece):
 class Bishop(Piece):
     def all_moves(self, b):
         m = []
-        return m
+        r, f = self.location
+        board = b.board
+        for i in range(1, 8 - max(r, f)):
+            if type(board[r + i, f + i]) == Piece and board[r + i, f + i].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[r + i, f + i] = Bishop(self.color, (r + i, f + i))
+                p.board[r, f] = None
+                m.append(p)
+        for i in range(1, min(f + 1, 8 - r)):
+            if type(board[r + i, f - i]) == Piece and board[r + i, f - i].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[r + i, f - i] = Bishop(self.color, (r + i, f - i))
+                p.board[r, f] = None
+                m.append(p)
+        for i in range(1, min(r, f) + 1):
+            if type(board[r - i, f - i]) == Piece and board[r - i, f - i].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[r - i, f - i] = Bishop(self.color, (r - i, f - i))
+                p.board[r, f] = None
+                m.append(p)
+        for i in range(1, min(r + 1, 8 - f)):
+            if type(board[r - i, f + i]) == Piece and board[r - i, f + i].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[r - i, f + i] = Bishop(self.color, (r - i, f + i))
+                p.board[r, f] = None
+                m.append(p)
+        return np.array(m)
 
 class Knight(Piece):
     def all_moves(self, b):
@@ -106,7 +139,73 @@ class Knight(Piece):
 class Queen(Piece):
     def all_moves(self, b):
         m = []
-        return m
+        r, f = self.location
+        board = b.board
+        for i in reversed(range(r)):
+            if type(board[i][f]) == Piece and board[i][f].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[i][f] = Queen(self.color, (i, f))
+                p.board[r][f] = None
+                m.append(p)
+        for i in range(r + 1, 8):
+            if type(board[i][f]) == Piece and board[i][f].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[i][f] = Queen(self.color, (i, f))
+                p.board[r][f] = None
+                m.append(p)
+        for i in reversed(range(f)):
+            if type(board[r][i]) == Piece and board[r][i].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[r][i] = Queen(self.color, (r, i))
+                p.board[r][f] = None
+                m.append(p)
+        for i in range(f + 1, 8):
+            if type(board[r][i]) == Piece and board[r][i].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[r][i] = Queen(self.color, (r, i))
+                p.board[r][f] = None
+                m.append(p)
+        for i in range(1, 8 - max(r, f)):
+            if type(board[r + i, f + i]) == Piece and board[r + i, f + i].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[r + i, f + i] = Queen(self.color, (r + i, f + i))
+                p.board[r, f] = None
+                m.append(p)
+        for i in range(1, min(f + 1, 8 - r)):
+            if type(board[r + i, f - i]) == Piece and board[r + i, f - i].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[r + i, f - i] = Queen(self.color, (r + i, f - i))
+                p.board[r, f] = None
+                m.append(p)
+        for i in range(1, min(r, f) + 1):
+            if type(board[r - i, f - i]) == Piece and board[r - i, f - i].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[r - i, f - i] = Queen(self.color, (r - i, f - i))
+                p.board[r, f] = None
+                m.append(p)
+        for i in range(1, min(r + 1, 8 - f)):
+            if type(board[r - i, f + i]) == Piece and board[r - i, f + i].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[r - i, f + i] = Queen(self.color, (r - i, f + i))
+                p.board[r, f] = None
+                m.append(p)
+        return np.array(m)
 
 class King(Piece):
     def all_moves(board):
@@ -216,10 +315,14 @@ def is_in_check(b, active_color):
                 king_file = y
 
     # pawn check
-    if king_rank < 7 and (
-            board[king_rank+1, king_file+1] == Pawn(not active_color, (king_rank+1, king_file+1)) or (
-            board[king_rank+1, king_file-1] == Pawn(not active_color, (king_rank+1, king_file-1)))):
-        return True
+    if active_color and king_rank < 6:
+        for f in [king_file - 1, king_file + 1]:
+            if f >= 0 and f <= 7 and board[king_rank + 1, f] == Pawn(not active_color, (king_rank + 1, f)):
+                return True
+    if not active_color and king_rank > 1:
+        for f in [king_file - 1, king_file + 1]:
+            if f >= 0 and f <= 7 and board[king_rank - 1, f] == Pawn(not active_color, (king_rank - 1, f)):
+                return True
 
     # knight check
     knight_positions = [(king_rank + 1, king_file + 2),
@@ -231,12 +334,10 @@ def is_in_check(b, active_color):
                         (king_rank - 2, king_file + 1),
                         (king_rank - 2, king_file - 1)]
     for p in knight_positions:
-        try:
+        if p[0] >= 0 and p[0] <= 7 and p[1] >= 0 and p[1] <= 7:
             n = board[p]
             if n == Knight(not active_color, p):
                 return True
-        except IndexError:
-            continue
 
     # bishop check and diagonal queen check
 
@@ -257,93 +358,69 @@ def is_in_check(b, active_color):
 #            break
 #    for i in range(1,min(king_rank,8-king_file)):  #down-right
 
-    for i in range(8):
-        try:
-            if board[king_rank+i, king_file+i] == Bishop(not active_color, (king_rank+i, king_file+i)):
-                return True
-            if board[king_rank+i, king_file+i] == Queen(not active_color, (king_rank+i, king_file+i)):
-                return True
-            if board[king_rank+i, king_file+i] != None:
-                break
-        except IndexError:
+    for i in range(1, 8-max(king_rank, king_file)):
+        if board[king_rank+i, king_file+i] == Bishop(not active_color, (king_rank+i, king_file+i)):
+            return True
+        if board[king_rank+i, king_file+i] == Queen(not active_color, (king_rank+i, king_file+i)):
+            return True
+        if board[king_rank+i, king_file+i] != None:
             break
-    for i in range(8):
-        try:
-            if board[king_rank+i, king_file-i] == Bishop(not active_color, (king_rank+i, king_file-i)):
-                return True
-            if board[king_rank+i, king_file-i] == Queen(not active_color, (king_rank+i, king_file-i)):
-                return True
-            if board[king_rank+i, king_file-i] != None:
-                break
-        except IndexError:
+    for i in range(1, min(king_file+1, 8-king_rank)):
+        if board[king_rank+i, king_file-i] == Bishop(not active_color, (king_rank+i, king_file-i)):
+            return True
+        if board[king_rank+i, king_file-i] == Queen(not active_color, (king_rank+i, king_file-i)):
+            return True
+        if board[king_rank+i, king_file-i] != None:
             break
-    for i in range(8):
-        try:
-            if board[king_rank-i, king_file-i] == Bishop(not active_color, (king_rank-i, king_file-i)):
-                return True
-            if board[king_rank-i, king_file-i] == Queen(not active_color, (king_rank-i, king_file-i)):
-                return True
-            if board[king_rank-i, king_file-i] != None:
-                break
-        except IndexError:
+    for i in range(1, min(king_rank, king_file)+1):
+        if board[king_rank-i, king_file-i] == Bishop(not active_color, (king_rank-i, king_file-i)):
+            return True
+        if board[king_rank-i, king_file-i] == Queen(not active_color, (king_rank-i, king_file-i)):
+            return True
+        if board[king_rank-i, king_file-i] != None:
             break
-    for i in range(8):
-        try:
-            if board[king_rank-i, king_file+i] == Bishop(not active_color, (king_rank-i, king_file+i)):
-                return True
-            if board[king_rank-i, king_file+i] == Queen(not active_color, (king_rank-i, king_file+i)):
-                return True
-            if board[king_rank-i, king_file+i] != None:
-                break
-        except IndexError:
+    for i in range(1, min(king_rank+1, 8-king_file)):
+        if board[king_rank-i, king_file+i] == Bishop(not active_color, (king_rank-i, king_file+i)):
+            return True
+        if board[king_rank-i, king_file+i] == Queen(not active_color, (king_rank-i, king_file+i)):
+            return True
+        if board[king_rank-i, king_file+i] != None:
             break
 
     # rook check and linear queen check
-    for i in range(8):
-        try:
-            if board[king_rank+i, king_file] == Rook(not active_color, (king_rank+i, king_file)):
-                return True
-            if board[king_rank+i, king_file] == Queen(not active_color, (king_rank+i, king_file)):
-                return True
-            if board[king_rank+i, king_file] != None:
-                break
-        except IndexError:
+    for i in range(king_rank+1, 8):
+        if board[i, king_file] == Rook(not active_color, (i, king_file)):
+            return True
+        if board[i, king_file] == Queen(not active_color, (i, king_file)):
+            return True
+        if board[i, king_file] != None:
             break
-    for i in range(8):
-        try:
-            if board[king_rank-i, king_file] == Rook(not active_color, (king_rank-i, king_file)):
-                return True
-            if board[king_rank-i, king_file] == Queen(not active_color, (king_rank-i, king_file)):
-                return True
-            if board[king_rank-i, king_file] != None:
-                break
-        except IndexError:
+    for i in reversed(range(king_rank)):
+        if board[i, king_file] == Rook(not active_color, (i, king_file)):
+            return True
+        if board[i, king_file] == Queen(not active_color, (i, king_file)):
+            return True
+        if board[i, king_file] != None:
             break
-    for i in range(8):
-        try:
-            if board[king_rank, king_file+i] == Rook(not active_color, (king_rank, king_file+1)):
-                return True
-            if board[king_rank, king_file+i] == Queen(not active_color, (king_rank, king_file+1)):
-                return True
-            if board[king_rank, king_file+i] != None:
-                break
-        except IndexError:
+    for i in range(king_file+1, 8):
+        if board[king_rank, i] == Rook(not active_color, (king_rank, i)):
+            return True
+        if board[king_rank, i] == Queen(not active_color, (king_rank, i)):
+            return True
+        if board[king_rank, i] != None:
             break
-    for i in range(8):
-        try:
-            if board[king_rank, king_file-i] == Rook(not active_color, (king_rank, king_file-1)):
-                return True
-            if board[king_rank, king_file-i] == Queen(not active_color, (king_rank, king_file-1)):
-                return True
-            if board[king_rank, king_file-i] != None:
-                break
-        except IndexError:
+    for i in reversed(range(king_file)):
+        if board[king_rank, i] == Rook(not active_color, (king_rank, i)):
+            return True
+        if board[king_rank, i] == Queen(not active_color, (king_rank, i)):
+            return True
+        if board[king_rank, i] != None:
             break
 
     # king check
-    for r in [king_rank, king_rank+1, king_rank-1]:
-        for f in [king_file, king_file+1, king_file-1]:
-            if board[r, f] == King(not active_color, (r, f)):
+    for i in [king_rank, king_rank+1, king_rank-1]:
+        for j in [king_file, king_file+1, king_file-1]:
+            if i >= 0 and i <= 7 and j >= 0 and j <= 7 and board[i, j] == King(not active_color, (i, j)):
                 return True
 
     return False
@@ -351,7 +428,7 @@ def is_in_check(b, active_color):
 def move_generation(b, active_color):
     actions = []  # a list of FEN strings
     for square in np.nditer(b.board):
-        if square.color is active_color and type(square) == Piece:
+        if (type(square) == Piece) and (square.color is active_color):
             actions.append(square.all_moves)
 
     for i in len(actions):
