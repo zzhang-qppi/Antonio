@@ -134,7 +134,24 @@ class Bishop(Piece):
 class Knight(Piece):
     def all_moves(self, b):
         m = []
-        return m
+        r, f = self.location
+        board = b.board
+        knight_positions = [(r + 1, f + 2),
+                            (r + 1, f - 2),
+                            (r - 1, f + 2),
+                            (r - 1, f - 2),
+                            (r + 2, f + 1),
+                            (r + 2, f - 1),
+                            (r - 2, f + 1),
+                            (r - 2, f - 1)]
+        for i in knight_positions:
+            if (0 <= i[0] <= 7) and (0 <= i[1] <= 7):
+                if not ((type(board[i]) == Piece) and (board[i].color is self.color)):
+                    p = b.copy()
+                    p.board[i] = Knight(self.color, i)
+                    p.board[r, f] = None
+                    m.append(p)
+        return np.array(m)
 
 class Queen(Piece):
     def all_moves(self, b):
@@ -208,9 +225,18 @@ class Queen(Piece):
         return np.array(m)
 
 class King(Piece):
-    def all_moves(board):
+    def all_moves(self, b):
         m = []
-        return m
+        r, f = self.location
+        board = b.board
+        for i in [r, r + 1, r - 1]:
+            for j in [f, f + 1, f - 1]:
+                if (0 <= i <= 7) and (0 <= j <= 7) and not (type(board[i, j]) == Piece and board[i, j].color is self.color):
+                    p = b.copy()
+                    p.board[i, j] = King(self.color, (i, j))
+                    p.board[r, f] = None
+                    m.append(p)
+        return np.array(m)
 
 class Board():
     def __init__(self, fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'):
