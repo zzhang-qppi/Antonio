@@ -10,7 +10,7 @@ class Piece():
         return []
 
     def __eq__(self, other):
-        return type(self) == type(other) and self.c == other.c and self.l == other.l
+        return type(self) == type(other) and self.color == other.color and self.location == other.location
 
 class Pawn(Piece):
     def all_moves(self, b):
@@ -59,8 +59,39 @@ class Rook(Piece):
         m = []
         r, f = self.location
         board = b.board
-        
-        return m
+        for i in reversed(range(r)):
+            if type(board[i][f]) == Piece and board[i][f].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[i][f] = Rook(self.color, (i,f))
+                p.board[r][f] = None
+                m.append(p)
+        for i in range(r+1, 8):
+            if type(board[i][f]) == Piece and board[i][f].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[i][f] = Rook(self.color, (i,f))
+                p.board[r][f] = None
+                m.append(p)
+        for i in reversed(range(f)):
+            if type(board[r][i]) == Piece and board[r][i].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[r][i] = Rook(self.color, (r, i))
+                p.board[r][f] = None
+                m.append(p)
+        for i in range(r+1, 8):
+            if type(board[r][i]) == Piece and board[r][i].color is self.color:
+                break
+            else:
+                p = b.copy()
+                p.board[r][i] = Rook(self.color, (r, i))
+                p.board[r][f] = None
+                m.append(p)
+        return np.array(m)
 
 class Bishop(Piece):
     def all_moves(self, b):
@@ -85,6 +116,7 @@ class King(Piece):
 class Board():
     def __init__(self, fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'):
         flist = fen.split()
+        self.fen = fen
         self.board = convert_board(convert_fen(flist[0]))
         self.turn = flist[1]
         self.castling_rights = flist[2]
@@ -96,6 +128,9 @@ class Board():
 
     def expand(self):
         self.possible_moves = move_generation(self, self.turn)
+
+    def copy(self):
+        return Board(self.fen)
 
 def convert_fen(f):
     board = np.array([[None for j in range(8)] for i in range(8)])  # board[rank, file]
