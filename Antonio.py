@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import torch
 
 class Antonio():
     def __init__(self, model_file):

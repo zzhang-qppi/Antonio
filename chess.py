@@ -274,8 +274,8 @@ def convert_fen(f):
 
 def convert_board(board):
     # board is an 8*8 array filled with characters from FEN. convertBoard() replaces the characters with Piece objects.
-    white_pieces = []
-    black_pieces = []
+    # white_pieces = []
+    # black_pieces = []
     for rank in board:
         for file in rank:
             current_charact = board[rank, file]
@@ -283,52 +283,52 @@ def convert_board(board):
                 case "p":
                     current_piece = Pawn(False, (rank, file))
                     board[rank, file] = current_piece
-                    black_pieces[current_charact] = current_piece
+                    # black_pieces[current_charact] = current_piece
                 case "r":
                     current_piece = Rook(False, (rank, file))
                     board[rank, file] = current_piece
-                    black_pieces[current_charact] = current_piece
+                    # black_pieces[current_charact] = current_piece
                 case "n":
                     current_piece = Knight(False, (rank, file))
                     board[rank, file] = current_piece
-                    black_pieces[current_charact] = current_piece
+                    # black_pieces[current_charact] = current_piece
                 case "b":
                     current_piece = Bishop(False, (rank, file))
                     board[rank, file] = current_piece
-                    black_pieces[current_charact] = current_piece
+                    # black_pieces[current_charact] = current_piece
                 case "q":
                     current_piece = Queen(False, (rank, file))
                     board[rank, file] = current_piece
-                    black_pieces[current_charact] = current_piece
+                    # black_pieces[current_charact] = current_piece
                 case "k":
                     current_piece = King(False, (rank, file))
                     board[rank, file] = current_piece
-                    black_pieces[current_charact] = current_piece
+                    # black_pieces[current_charact] = current_piece
                 case "P":
                     current_piece = Pawn(True, (rank, file))
                     board[rank, file] = current_piece
-                    white_pieces[current_charact] = current_piece
+                    # white_pieces[current_charact] = current_piece
                 case "R":
                     current_piece = Rook(True, (rank, file))
                     board[rank, file] = current_piece
-                    white_pieces[current_charact] = current_piece
+                    # white_pieces[current_charact] = current_piece
                 case "N":
                     current_piece = Knight(True, (rank, file))
                     board[rank, file] = current_piece
-                    white_pieces[current_charact] = current_piece
+                    # white_pieces[current_charact] = current_piece
                 case "B":
                     current_piece = Bishop(True, (rank, file))
                     board[rank, file] = current_piece
-                    white_pieces[current_charact] = current_piece
+                    # white_pieces[current_charact] = current_piece
                 case "Q":
                     current_piece = Queen(True, (rank, file))
                     board[rank, file] = current_piece
-                    white_pieces[current_charact] = current_piece
+                    # white_pieces[current_charact] = current_piece
                 case "K":
                     current_piece = King(True, (rank, file))
                     board[rank, file] = current_piece
-                    white_pieces[current_charact] = current_piece
-    return board, white_pieces, black_pieces
+                    # white_pieces[current_charact] = current_piece
+    return board  # , white_pieces, black_pieces
 
 def is_in_check(b, active_color):
     # return True if the king is in check; False otherwise
@@ -462,11 +462,11 @@ def move_generation(b, active_color):
             del actions[i]
     return actions
 
-def is_terminal(board):
-    return len(move_generation(board)) == 0
+def is_terminal(b):
+    return len(move_generation(b)) == 0
 
-def result(board, turn):
-    if not is_terminal(board): return 0
-    if is_in_check(board, turn): return -1
-    if is_in_check(board, not turn): return 1
+def result(b, turn):
+    if not is_terminal(b): return 0
+    if is_in_check(b, turn): return -1
+    if is_in_check(b, not turn): return 1
     return 0.5
