@@ -23,7 +23,7 @@ class Node:
     def children_is_found(self):
         return len(self.children) != 0
 
-
+# an implementation of Monte Carlo Tree Search
 class MCT:
     def __init__(self, root):
         self.root = Node(root)
