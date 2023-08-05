@@ -4,6 +4,7 @@ import torch
 import MCTS
 import os
 from torch.utils.data import Dataset, DataLoader
+import datetime
 
 learning_rate = 1e-3
 batch_size = 20
@@ -11,9 +12,9 @@ epochs = 10
 in_features = 8*8*12+1+4+8+1
 
 class ChessDataset(Dataset):
-    def __init__(self, dir):
-        self.labels = pd.read_csv(os.path.join(dir, "labels_file"))
-        self.inputs = pd.read_csv(os.path.join(dir, "inputs_file"))
+    def __init__(self, data_dir):
+        self.labels = pd.read_csv(os.path.join(data_dir, "labels_file"))
+        self.inputs = pd.read_csv(os.path.join(data_dir, "inputs_file"))
 
     def __len__(self):
         return len(self.labels)
@@ -23,16 +24,19 @@ class ChessDataset(Dataset):
         label = self.labels.iloc[idx]
         return input_data, label
 
-class Antonio():
-    def __init__(self, model_path = ""):
-        self.model = self.load_model(model_path)
+class Antonio:
+    def __init__(self, load_path=""):
+        self.model = self.load_model(load_path)
 
     @staticmethod
-    def load_model(model_path):
-        if model_path != "":
+    def load_model(load_path):
+        if load_path != "":
             return Antonio.NeuralNetwork()
         else:
-            return None
+            return torch.load(load_path)
+
+    def save_model(self, save_path):
+        torch.save(self.model, save_path)
 
     def train_loop(self, dataloader, loss_fn, optimizer_fn):
         size = len(dataloader.dataset)
@@ -48,10 +52,7 @@ class Antonio():
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-
-            if batch % 100 == 0:
-                loss, current = loss.item(), (batch + 1) * len(X)
-                print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+        return loss.item()
 
     def test_loop(self, dataloader, loss_fn):
         # Set the model to evaluation mode
@@ -70,15 +71,14 @@ class Antonio():
         correct /= size
         print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
 
-    def train_model(self, train_dataloader, test_dataloader, learning_rate, batch_size, loss_fn, optimizer_fn):
-        optimizer = optimizer_fn(self.model.parameters(), lr=learning_rate)
-
-        epochs = 10
+    def train_model(self, dataloader, lr, loss_fn, optimizer_fn):
+        optimizer = optimizer_fn(self.model.parameters(), lr=lr)
+        costs = []
         for t in range(epochs):
             print(f"Epoch {t + 1}\n-------------------------------")
-            self.train_loop(train_dataloader, self.model, loss_fn, optimizer)
-            self.test_loop(test_dataloader, self.model, loss_fn)
-        print("Done!")
+            loss = self.train_loop(dataloader, loss_fn, optimizer)
+            costs.append(loss)
+        return costs
 
     def selfplay(self, max_games):
         for game in range(max_games):
@@ -123,7 +123,7 @@ class Antonio():
         def __init__(self):
             super().__init__()
             self.flatten = torch.nn.Flatten()
-            self.linear_relu_stack = torch.nn.Sequential(
+            self.network = torch.nn.Sequential(
                 torch.nn.Linear(in_features, 512),
                 torch.nn.ReLU(),
                 torch.nn.Linear(512, 512),
@@ -133,18 +133,18 @@ class Antonio():
 
         def forward(self, x):
             x = self.flatten(x)
-            logits = self.linear_relu_stack(x)
+            logits = self.network(x)
             return logits
 
-loss_fn = torch.nn.CrossEntropyLoss()
-optimizer_fn = torch.optim.SGD
+
+lo_fn = torch.nn.MSELoss()
+opt_fn = torch.optim.SGD
 
 train_dataloader = DataLoader(ChessDataset("/"), batch_size=batch_size, shuffle=True)
 test_dataloader = DataLoader(ChessDataset("/"), batch_size=batch_size, shuffle=True)
 
 Antonio_1 = Antonio("")
 
-for t in range(epochs):
-    print(f"Epoch {t+1}\n-------------------------------")
-    Antonio_1.train_loop(train_dataloader, loss_fn, optimizer_fn)
-    Antonio_1.test_loop(test_dataloader, Antonio_1.model, loss_fn)
+costs = Antonio_1.train_model(train_dataloader, learning_rate, lo_fn, opt_fn)
+
+Antonio_1.save_model('model.pth')
