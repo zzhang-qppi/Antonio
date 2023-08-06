@@ -138,7 +138,7 @@ class Pawn(Piece):
                     p.board[b.enpassant[0] - 1, b.enpassant[1]] = Pawn(self.color, (b.enpassant[0] - 1, b.enpassant[1]))
                     p.enpassant = "-"
                     m.append(p)
-        return np.array(m)
+        return m
 
 
 class Rook(Piece):
@@ -181,7 +181,7 @@ class Rook(Piece):
                 p.board[r, i] = Rook(self.color, (r, i))
                 p.board[r, f] = None
                 m.append(p)
-        return np.array(m)
+        return m
 
 
 class Bishop(Piece):
@@ -221,7 +221,7 @@ class Bishop(Piece):
                 p.board[r - i, f + i] = Bishop(self.color, (r - i, f + i))
                 p.board[r, f] = None
                 m.append(p)
-        return np.array(m)
+        return m
 
 
 class Knight(Piece):
@@ -244,7 +244,7 @@ class Knight(Piece):
                     p.board[i] = Knight(self.color, i)
                     p.board[r, f] = None
                     m.append(p)
-        return np.array(m)
+        return m
 
 
 class Queen(Piece):
@@ -316,7 +316,7 @@ class Queen(Piece):
                 p.board[r - i, f + i] = Queen(self.color, (r - i, f + i))
                 p.board[r, f] = None
                 m.append(p)
-        return np.array(m)
+        return m
 
 
 class King(Piece):
@@ -338,7 +338,7 @@ class King(Piece):
                         p.castling_rights = p.castling_rights.replace("k", "")
                         p.castling_rights = p.castling_rights.replace("q", "")
                     m.append(p)
-        return np.array(m)
+        return m
 
 
 class Board:
@@ -371,7 +371,7 @@ class Board:
 
 
 def convert_fen(f):
-    board = np.array([[None for j in range(8)] for i in range(8)])  # board[rank, file]
+    board = [[None for j in range(8)] for i in range(8)]  # board[rank, file]
     ranks = f.split("/")  # a list of strings, each of which represents a rank
     for rank in ranks:
         pointer = 0
@@ -568,15 +568,33 @@ def is_in_check(b, active_color):
 
 
 def to_bitboard(b):
-    r = []
+    P, R, N, B, Q, K, p, r, n, b, q, k = np.zeros([12, 8, 8])
+    for i in range(8):
+        for j in range(8):
+            d = b.board[i, j]
+            if d is None: continue
+            elif type(d) == Pawn and d.color: P[i, j] = 1
+            elif type(d) == Pawn and not d.color: p[i, j] = 1
+            elif type(d) == Rook and d.color: R[i, j] = 1
+            elif type(d) == Rook and not d.color: r[i, j] = 1
+            elif type(d) == Knight and d.color: N[i, j] = 1
+            elif type(d) == Knight and not d.color: n[i, j] = 1
+            elif type(d) == Bishop and d.color: B[i, j] = 1
+            elif type(d) == Bishop and not d.color: b[i, j] = 1
+            elif type(d) == Queen and d.color: Q[i, j] = 1
+            elif type(d) == Queen and not d.color: q[i, j] = 1
+            elif type(d) == King and d.color: K[i, j] = 1
+            elif type(d) == King and not d.color: k[i, j] = 1
+
 
 
 def move_generation(b, active_color):
     if is_terminal(b): return -1
     actions = []  # a list of FEN strings
-    for square in np.nditer(b.board):
-        if (type(square) == Piece) and (square.color is active_color):
-            actions.append(square.all_moves)
+    for r in b.board:
+        for square in r:
+            if (type(square) == Piece) and (square.color is active_color):
+                actions.append(square.all_moves)
 
     for i in len(actions):
         if is_in_check(actions[i], active_color):
@@ -584,7 +602,7 @@ def move_generation(b, active_color):
         else:
             if actions[i].turn is False: actions[i].fullmoves += 1
             actions[i].turn = not actions[i].turn
-    return np.array(actions)
+    return actions
 
 
 def is_terminal(b):
