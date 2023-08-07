@@ -9,7 +9,7 @@ import datetime
 learning_rate = 1e-3
 batch_size = 20
 epochs = 10
-in_features = 8*8*12+1+4+8+1
+in_features = 8*8*12+2+4+8+1
 
 class ChessDataset(Dataset):
     def __init__(self, data_dir):

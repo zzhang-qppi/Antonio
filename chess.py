@@ -63,20 +63,20 @@ class Pawn(Piece):
                     p.halfmoves += 1
                     m.append(p)
             # en passant
-            if b.enpassant != 0:
-                if b.enpassant[1] + 1 <= 7 and type(board[b.enpassant[0], b.enpassant[1] + 1]) == Pawn and board[
-                    b.enpassant[0], b.enpassant[1] + 1].color == self.color:
+            if b.enpassant != -1:
+                if b.enpassant + 1 <= 7 and type(board[3, b.enpassant + 1]) == Pawn and board[
+                    3, b.enpassant + 1].color == self.color:
                     p = b.copy()
-                    p.board[b.enpassant[0], b.enpassant[1] + 1] = None
-                    p.board[b.enpassant[0], b.enpassant[1]] = None
-                    p.board[b.enpassant[0] + 1, b.enpassant[1]] = Pawn(self.color, (b.enpassant[0] + 1, b.enpassant[1]))
+                    p.board[3, b.enpassant + 1] = None
+                    p.board[3, b.enpassant] = None
+                    p.board[3 + 1, b.enpassant] = Pawn(self.color, (3 + 1, b.enpassant))
                     m.append(p)
-                if b.enpassant[1] - 1 >= 0 and type(board[b.enpassant[0], b.enpassant[1] - 1]) == Pawn and board[
-                    b.enpassant[0], b.enpassant[1] - 1].color == self.color:
+                if b.enpassant - 1 >= 0 and type(board[3, b.enpassant - 1]) == Pawn and board[
+                    3, b.enpassant - 1].color == self.color:
                     p = b.copy()
-                    p.board[b.enpassant[0], b.enpassant[1] - 1] = None
-                    p.board[b.enpassant[0], b.enpassant[1]] = None
-                    p.board[b.enpassant[0] + 1, b.enpassant[1]] = Pawn(self.color, (b.enpassant[0] + 1, b.enpassant[1]))
+                    p.board[3, b.enpassant - 1] = None
+                    p.board[3, b.enpassant] = None
+                    p.board[3 + 1, b.enpassant] = Pawn(self.color, (3 + 1, b.enpassant))
                     m.append(p)
 
         else:
@@ -122,20 +122,20 @@ class Pawn(Piece):
                     m.append(p)
             # en passant
             if b.enpassant != 0:
-                if b.enpassant[1] + 1 <= 7 and type(board[b.enpassant[0], b.enpassant[1] + 1]) == Pawn and board[
-                    b.enpassant[0], b.enpassant[1] + 1].color == self.color:
+                if b.enpassant + 1 <= 7 and type(board[4, b.enpassant + 1]) == Pawn and board[
+                    4, b.enpassant + 1].color == self.color:
                     p = b.copy()
-                    p.board[b.enpassant[0], b.enpassant[1] + 1] = None
-                    p.board[b.enpassant[0], b.enpassant[1]] = None
-                    p.board[b.enpassant[0] - 1, b.enpassant[1]] = Pawn(self.color, (b.enpassant[0] - 1, b.enpassant[1]))
+                    p.board[4, b.enpassant + 1] = None
+                    p.board[4, b.enpassant] = None
+                    p.board[4 - 1, b.enpassant] = Pawn(self.color, (4 - 1, b.enpassant))
                     p.enpassant = "-"
                     m.append(p)
-                if b.enpassant[1] - 1 >= 0 and type(board[b.enpassant[0], b.enpassant[1] - 1]) == Pawn and board[
-                    b.enpassant[0], b.enpassant[1] - 1].color == self.color:
+                if b.enpassant - 1 >= 0 and type(board[4, b.enpassant - 1]) == Pawn and board[
+                    4, b.enpassant - 1].color == self.color:
                     p = b.copy()
-                    p.board[b.enpassant[0], b.enpassant[1] - 1] = None
-                    p.board[b.enpassant[0], b.enpassant[1]] = None
-                    p.board[b.enpassant[0] - 1, b.enpassant[1]] = Pawn(self.color, (b.enpassant[0] - 1, b.enpassant[1]))
+                    p.board[4, b.enpassant - 1] = None
+                    p.board[4, b.enpassant] = None
+                    p.board[4 - 1, b.enpassant] = Pawn(self.color, (4 - 1, b.enpassant))
                     p.enpassant = "-"
                     m.append(p)
         return m
@@ -348,7 +348,7 @@ class Board:
         self.board = convert_board(convert_fen(flist[0]))
         self.turn = True if flist[1] == "w" else False
         self.castling_rights = flist[2]
-        self.enpassant = 0 if flist[3] == "-" else (ord(flist[3][0]) - 96, int(flist[3][1]))
+        self.enpassant = -1 if flist[3] == "-" else ord(flist[3][0]) - 96
         self.possible_moves = []
         self.halfmoves = int(flist[4])
         self.fullmoves = int(flist[5])
@@ -568,25 +568,49 @@ def is_in_check(b, active_color):
 
 
 def to_bitboard(b):
-    P, R, N, B, Q, K, p, r, n, b, q, k = np.zeros([12, 8, 8])
+    P, R, N, B, Q, K, p, r, n, b, q, k = np.zeros([12, 8, 8], dtype=np.int8)
     for i in range(8):
         for j in range(8):
             d = b.board[i, j]
             if d is None: continue
-            elif type(d) == Pawn and d.color: P[i, j] = 1
-            elif type(d) == Pawn and not d.color: p[i, j] = 1
-            elif type(d) == Rook and d.color: R[i, j] = 1
-            elif type(d) == Rook and not d.color: r[i, j] = 1
-            elif type(d) == Knight and d.color: N[i, j] = 1
-            elif type(d) == Knight and not d.color: n[i, j] = 1
-            elif type(d) == Bishop and d.color: B[i, j] = 1
-            elif type(d) == Bishop and not d.color: b[i, j] = 1
-            elif type(d) == Queen and d.color: Q[i, j] = 1
-            elif type(d) == Queen and not d.color: q[i, j] = 1
-            elif type(d) == King and d.color: K[i, j] = 1
-            elif type(d) == King and not d.color: k[i, j] = 1
+            elif type(d) == Pawn:
+                if d.color: P[i, j] = 1
+                else: p[i, j] = 1
+            elif type(d) == Rook:
+                if d.color: R[i, j] = 1
+                else: r[i, j] = 1
+            elif type(d) == Knight:
+                if d.color: N[i, j] = 1
+                else: n[i, j] = 1
+            elif type(d) == Bishop:
+                if d.color: B[i, j] = 1
+                else: b[i, j] = 1
+            elif type(d) == Queen:
+                if d.color: Q[i, j] = 1
+                else: q[i, j] = 1
+            elif type(d) == King:
+                if d.color: K[i, j] = 1
+                else: k[i, j] = 1
+    for arr in [P, R, N, B, Q, K, p, r, n, b, q, k]:
+        arr = arr.flatten(order='F')
+    piece_placement = np.concatenate([P, R, N, B, Q, K, p, r, n, b, q, k], dtype=np.int8)
+    extra_info = np.zeros(1+4+8+1, dtype=np.int8)
+    # active color: white=1, black=0
+    extra_info[0] = 1 if b.active_color else 0
 
+    # castling rights
+    if "K" in b.castling_rights: extra_info[1] = 1
+    if "Q" in b.castling_rights: extra_info[2] = 1
+    if "k" in b.castling_rights: extra_info[3] = 1
+    if "q" in b.castling_rights: extra_info[4] = 1
 
+    # enpassant
+    extra_info[5 + b.enpassant] = 1 * (b.enpassant != -1)
+
+    # halfmove
+    extra_info[13] = b.halfmoves
+
+    return np.concatenate((piece_placement, extra_info), dtype=np.int8)
 
 def move_generation(b, active_color):
     if is_terminal(b): return -1
