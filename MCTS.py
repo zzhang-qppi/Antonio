@@ -1,5 +1,4 @@
 import numpy as np
-import tensorflow as tf
 from chess import Board, move_generation, is_terminal, result
 class Node:
     def __init__(self, board, father = None):
@@ -80,7 +79,37 @@ class MCT:
         choices_weights = [(child.wins / child.visit_count) + c_param * np.sqrt((np.log(node.visit_count) / child.visit_count))
                            for child in node.children
                            ]  # UCT selection
+        node.children[np.argmax(choices_weights)].visit_count += 1
         return node.children[np.argmax(choices_weights)]
 
 
-def
+def find_best_solution(b, iter):
+    mct = MCT(b)
+    return mct.search(iter)
+
+def selfplay(self, max_games):
+    for game in range(max_games):
+        white_game_pairs = []
+        black_game_pairs = []
+        game_over = False
+        board = Board()
+        while not game_over:
+            sa = np.array(MCT(board))
+            if board.turn:
+                white_game_pairs.append(sa)
+            else:
+                black_game_pairs.append(sa)
+            board, game_over = self.next_move(sa[0], sa[1])
+            side = not side
+
+        if len(white_game_pairs) > len(black_game_pairs):
+            white_game_triples = np.stack((white_game_pairs, [1]*len(white_game_pairs)))
+            black_game_triples = np.stack((black_game_pairs, [0] * len(black_game_pairs)))
+        elif len(white_game_pairs) == len(black_game_pairs):
+            white_game_triples = np.stack((white_game_pairs, [0]*len(white_game_pairs)))
+            black_game_triples = np.stack((black_game_pairs, [1] * len(black_game_pairs)))
+        else:
+            print("numbers of rounds don't match up")
+
+        self.train(white_game_triples)
+        self.train(black_game_triples)
