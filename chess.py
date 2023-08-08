@@ -22,14 +22,14 @@ class Pawn(Piece):
         board = b.board
         if self.color:
             # pawn captures
-            if r + 1 <= 7 and f - 1 >= 0:
+            if r + 1 < 7 and f - 1 >= 0:
                 if type(board[r + 1, f - 1]) == Piece and not board[r + 1, f - 1].color:
                     p = b.copy()
                     p.board[r, f] = None
                     p.board[r + 1, f - 1] = Pawn(self.color, (r + 1, f - 1))
                     p.halfmoves += 1
                     m.append(p)
-            if r + 1 <= 7 and f + 1 <= 7:
+            if r + 1 < 7 and f + 1 <= 7:
                 if type(board[r + 1, f + 1]) == Piece and not board[r + 1, f + 1].color:
                     p = b.copy()
                     p.board[r, f] = None
@@ -37,8 +37,23 @@ class Pawn(Piece):
                     p.halfmoves += 1
                     m.append(p)
 
-                # promotion after a capture
-
+            # promotion after a capture
+            if r + 1 == 7 and f - 1 >= 0:
+                if type(board[r + 1, f - 1]) == Piece and not board[r + 1, f - 1].color:
+                    for P in (Queen, Knight, Rook, Bishop):
+                        p = b.copy()
+                        p.board[r, f] = None
+                        p.board[r + 1, f - 1] = P(self.color, (r + 1, f - 1))
+                        p.halfmoves += 1
+                        m.append(p)
+            if r + 1 == 7 and f + 1 <= 7:
+                if type(board[r + 1, f + 1]) == Piece and not board[r + 1, f + 1].color:
+                    for P in (Queen, Knight, Rook, Bishop):
+                        p = b.copy()
+                        p.board[r, f] = None
+                        p.board[r + 1, f + 1] = P(self.color, (r + 1, f + 1))
+                        p.halfmoves += 1
+                        m.append(p)
 
             # pawn advancements
             if r + 1 <= 6 and board[r + 1, f] is None:
@@ -54,6 +69,7 @@ class Pawn(Piece):
                 p.halfmoves += 1
                 p.enpassant = (3, f)
                 m.append(p)
+
             # pawn promotion
             if r == 6 and board[7, f] is None:
                 for Prom in [Queen, Rook, Bishop, Knight]:
@@ -62,6 +78,7 @@ class Pawn(Piece):
                     p.board[7, f] = Prom(self.color, (7, f))
                     p.halfmoves += 1
                     m.append(p)
+
             # en passant
             if b.enpassant != -1:
                 if b.enpassant + 1 <= 7 and type(board[3, b.enpassant + 1]) == Pawn and board[
@@ -70,6 +87,7 @@ class Pawn(Piece):
                     p.board[3, b.enpassant + 1] = None
                     p.board[3, b.enpassant] = None
                     p.board[3 + 1, b.enpassant] = Pawn(self.color, (3 + 1, b.enpassant))
+                    p.halfmoves += 1
                     m.append(p)
                 if b.enpassant - 1 >= 0 and type(board[3, b.enpassant - 1]) == Pawn and board[
                     3, b.enpassant - 1].color == self.color:
@@ -77,25 +95,43 @@ class Pawn(Piece):
                     p.board[3, b.enpassant - 1] = None
                     p.board[3, b.enpassant] = None
                     p.board[3 + 1, b.enpassant] = Pawn(self.color, (3 + 1, b.enpassant))
+                    p.halfmoves += 1
                     m.append(p)
 
         else:
             # pawn captures
-            if r - 1 >= 0 and f - 1 >= 0:
+            if r - 1 > 0 and f - 1 >= 0:
                 if type(board[r - 1, f - 1]) == Piece and not board[r - 1, f - 1].color:
                     p = b.copy()
                     p.board[r, f] = None
                     p.board[r - 1, f - 1] = Pawn(self.color, (r - 1, f - 1))
+                    p.halfmoves += 1
                     m.append(p)
-            if r - 1 >= 0 and f + 1 <= 7:
+            if r - 1 > 0 and f + 1 <= 7:
                 if type(board[r - 1, f + 1]) == Piece and not board[r - 1, f + 1].color:
                     p = b.copy()
                     p.board[r, f] = None
                     p.board[r - 1, f + 1] = Pawn(self.color, (r - 1, f + 1))
+                    p.halfmoves += 1
                     m.append(p)
 
-                    # promotion after a capture
-
+            # promotion after a capture
+            if r - 1 == 0 and f - 1 >= 0:
+                if type(board[r - 1, f - 1]) == Piece and not board[r - 1, f - 1].color:
+                    for P in (Queen, Knight, Rook, Bishop):
+                        p = b.copy()
+                        p.board[r, f] = None
+                        p.board[r - 1, f - 1] = P(self.color, (r - 1, f - 1))
+                        p.halfmoves += 1
+                        m.append(p)
+            if r - 1 == 0 and f + 1 <= 7:
+                if type(board[r - 1, f + 1]) == Piece and not board[r - 1, f + 1].color:
+                    for P in (Queen, Knight, Rook, Bishop):
+                        p = b.copy()
+                        p.board[r, f] = None
+                        p.board[r - 1, f + 1] = P(self.color, (r - 1, f + 1))
+                        p.halfmoves += 1
+                        m.append(p)
 
             # pawn advancements
             if r - 1 >= 1:
@@ -128,7 +164,8 @@ class Pawn(Piece):
                     p.board[4, b.enpassant + 1] = None
                     p.board[4, b.enpassant] = None
                     p.board[4 - 1, b.enpassant] = Pawn(self.color, (4 - 1, b.enpassant))
-                    p.enpassant = "-"
+                    p.enpassant = -1
+                    p.halfmoves += 1
                     m.append(p)
                 if b.enpassant - 1 >= 0 and type(board[4, b.enpassant - 1]) == Pawn and board[
                     4, b.enpassant - 1].color == self.color:
@@ -136,7 +173,8 @@ class Pawn(Piece):
                     p.board[4, b.enpassant - 1] = None
                     p.board[4, b.enpassant] = None
                     p.board[4 - 1, b.enpassant] = Pawn(self.color, (4 - 1, b.enpassant))
-                    p.enpassant = "-"
+                    p.enpassant = -1
+                    p.halfmoves += 1
                     m.append(p)
         return m
 
@@ -154,6 +192,7 @@ class Rook(Piece):
                 break
             else:
                 p = b.copy()
+                if board[i, f] is not None: p.halfmoves += 1
                 p.board[i, f] = Rook(self.color, (i, f))
                 p.board[r, f] = None
                 m.append(p)
@@ -162,6 +201,7 @@ class Rook(Piece):
                 break
             else:
                 p = b.copy()
+                if board[i, f] is not None: p.halfmoves += 1
                 p.board[i, f] = Rook(self.color, (i, f))
                 p.board[r, f] = None
                 m.append(p)
@@ -170,6 +210,7 @@ class Rook(Piece):
                 break
             else:
                 p = b.copy()
+                if board[r, i] is not None: p.halfmoves += 1
                 p.board[r, i] = Rook(self.color, (r, i))
                 p.board[r, f] = None
                 m.append(p)
@@ -178,9 +219,23 @@ class Rook(Piece):
                 break
             else:
                 p = b.copy()
+                if board[r, i] is not None: p.halfmoves += 1
                 p.board[r, i] = Rook(self.color, (r, i))
                 p.board[r, f] = None
                 m.append(p)
+
+        # change to castling rights after rook moves
+        for move in m:
+            if r == 0 and self.color:
+                if f == 0:
+                    move.castling_rights = move.castling_rights.replace("Q", "")
+                elif f == 7:
+                    move.castling_rights = move.caslting_rights.replace("K", "")
+            elif r == 7 and not self.color:
+                if f == 0:
+                    move.castling_rights = move.caslting_rights.replace("q", "")
+                elif f == 7:
+                    move.castling_rights = move.caslting_rights.replace("k", "")
         return m
 
 
@@ -194,6 +249,7 @@ class Bishop(Piece):
                 break
             else:
                 p = b.copy()
+                if board[r + i, f + i] is not None: p.halfmoves += 1
                 p.board[r + i, f + i] = Bishop(self.color, (r + i, f + i))
                 p.board[r, f] = None
                 m.append(p)
@@ -202,6 +258,7 @@ class Bishop(Piece):
                 break
             else:
                 p = b.copy()
+                if board[r + i, f - i] is not None: p.halfmoves += 1
                 p.board[r + i, f - i] = Bishop(self.color, (r + i, f - i))
                 p.board[r, f] = None
                 m.append(p)
@@ -210,6 +267,7 @@ class Bishop(Piece):
                 break
             else:
                 p = b.copy()
+                if board[r - i, f - i] is not None: p.halfmoves += 1
                 p.board[r - i, f - i] = Bishop(self.color, (r - i, f - i))
                 p.board[r, f] = None
                 m.append(p)
@@ -218,6 +276,7 @@ class Bishop(Piece):
                 break
             else:
                 p = b.copy()
+                if board[r - i, f + i] is not None: p.halfmoves += 1
                 p.board[r - i, f + i] = Bishop(self.color, (r - i, f + i))
                 p.board[r, f] = None
                 m.append(p)
@@ -241,6 +300,7 @@ class Knight(Piece):
             if (0 <= i[0] <= 7) and (0 <= i[1] <= 7):
                 if not ((type(board[i]) == Piece) and (board[i].color is self.color)):
                     p = b.copy()
+                    if board[i] is not None: p.halfmoves += 1
                     p.board[i] = Knight(self.color, i)
                     p.board[r, f] = None
                     m.append(p)
@@ -257,6 +317,7 @@ class Queen(Piece):
                 break
             else:
                 p = b.copy()
+                if board[i, f] is not None: p.halfmoves += 1
                 p.board[i, f] = Queen(self.color, (i, f))
                 p.board[r, f] = None
                 m.append(p)
@@ -265,6 +326,7 @@ class Queen(Piece):
                 break
             else:
                 p = b.copy()
+                if board[i, f] is not None: p.halfmoves += 1
                 p.board[i, f] = Queen(self.color, (i, f))
                 p.board[r, f] = None
                 m.append(p)
@@ -273,6 +335,7 @@ class Queen(Piece):
                 break
             else:
                 p = b.copy()
+                if board[r, i] is not None: p.halfmoves += 1
                 p.board[r, i] = Queen(self.color, (r, i))
                 p.board[r, f] = None
                 m.append(p)
@@ -281,6 +344,7 @@ class Queen(Piece):
                 break
             else:
                 p = b.copy()
+                if board[r, i] is not None: p.halfmoves += 1
                 p.board[r, i] = Queen(self.color, (r, i))
                 p.board[r, f] = None
                 m.append(p)
@@ -289,6 +353,7 @@ class Queen(Piece):
                 break
             else:
                 p = b.copy()
+                if board[r + i, f + i] is not None: p.halfmoves += 1
                 p.board[r + i, f + i] = Queen(self.color, (r + i, f + i))
                 p.board[r, f] = None
                 m.append(p)
@@ -297,6 +362,7 @@ class Queen(Piece):
                 break
             else:
                 p = b.copy()
+                if board[r + i, f - i] is not None: p.halfmoves += 1
                 p.board[r + i, f - i] = Queen(self.color, (r + i, f - i))
                 p.board[r, f] = None
                 m.append(p)
@@ -305,6 +371,7 @@ class Queen(Piece):
                 break
             else:
                 p = b.copy()
+                if board[r - i, f - i] is not None: p.halfmoves += 1
                 p.board[r - i, f - i] = Queen(self.color, (r - i, f - i))
                 p.board[r, f] = None
                 m.append(p)
@@ -313,6 +380,7 @@ class Queen(Piece):
                 break
             else:
                 p = b.copy()
+                if board[r - i, f + i] is not None: p.halfmoves += 1
                 p.board[r - i, f + i] = Queen(self.color, (r - i, f + i))
                 p.board[r, f] = None
                 m.append(p)
@@ -329,6 +397,7 @@ class King(Piece):
                 if (0 <= i <= 7) and (0 <= j <= 7) and not (
                         type(board[i, j]) == Piece and board[i, j].color is self.color):
                     p = b.copy()
+                    if board[i, j] is not None: p.halfmoves += 1
                     p.board[i, j] = King(self.color, (i, j))
                     p.board[r, f] = None
                     if self.color and ("K" in p.castling_rights or "Q" in p.castling_rights):
@@ -366,7 +435,6 @@ class Board:
 
     def copy(self):
         a = Board(self.fen)
-        a.enpassant = "-"
         return a
 
 
@@ -445,10 +513,11 @@ def convert_board(board):
     return board  # , white_pieces, black_pieces
 
 
-def is_in_check(b, active_color):
+def is_in_check(b):
     # return True if the king is in check; False otherwise
 
     board = b.board
+    active_color = not b.turn  # the side that would be in check is the opposite of the active color next turn
     for x in range(8):
         for y in range(8):
             if board[x, y] == King(active_color, (x, y)):
@@ -596,7 +665,7 @@ def to_bitboard(b):
     piece_placement = np.concatenate([P, R, N, B, Q, K, p, r, n, b, q, k], dtype=np.int8)
     extra_info = np.zeros(1+4+8+1, dtype=np.int8)
     # active color: white=1, black=0
-    extra_info[0] = 1 if b.active_color else 0
+    extra_info[0] = 1 if b.turn else 0
 
     # castling rights
     if "K" in b.castling_rights: extra_info[1] = 1
@@ -612,20 +681,22 @@ def to_bitboard(b):
 
     return np.concatenate((piece_placement, extra_info), dtype=np.int8)
 
-def move_generation(b, active_color):
+
+def move_generation(b):
     if is_terminal(b): return -1
     actions = []  # a list of FEN strings
     for r in b.board:
         for square in r:
-            if (type(square) == Piece) and (square.color is active_color):
+            if (type(square) == Piece) and (square.color is b.turn):
                 actions.append(square.all_moves)
 
     for i in len(actions):
-        if is_in_check(actions[i], active_color):
+        if is_in_check(actions[i]):
             del actions[i]
         else:
             if actions[i].turn is False: actions[i].fullmoves += 1
             actions[i].turn = not actions[i].turn
+            actions[i].enpassant = -1
     return actions
 
 
