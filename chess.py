@@ -411,7 +411,7 @@ class King(Piece):
 
 
 class Board:
-    def __init__(self, fen='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'):
+    def __init__(self, fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"):
         flist = fen.split()
         self.fen = fen
         self.board = convert_board(convert_fen(flist[0]))
@@ -419,23 +419,82 @@ class Board:
         self.castling_rights = flist[2]
         self.enpassant = -1 if flist[3] == "-" else ord(flist[3][0]) - 96
         self.possible_moves = []
+        self.is_expanded = False
         self.halfmoves = int(flist[4])
         self.fullmoves = int(flist[5])
         self.is_terminal = self.halfmoves == 50 or is_terminal(self)
         if int(flist[4]) >= 100:
             self.is_terminal = True
 
-    def is_expanded(self):
-        if is_terminal(self): return -1
-        return len(self.possible_moves) != 0
-
     def expand(self):
-        self.possible_moves = move_generation(self, self.turn)
-        return 0
+        if self.is_expanded:
+            return
+        else:
+            self.possible_moves = move_generation(self)
+            self.is_expanded = True
+        return
 
     def copy(self):
         a = Board(self.fen)
         return a
+
+    def to_bitboard(self):
+        P, R, N, B, Q, K, p, r, n, self, q, k = np.zeros([12, 8, 8], dtype=np.int8)
+        for i in range(8):
+            for j in range(8):
+                d = self.board[i, j]
+                if d is None:
+                    continue
+                elif type(d) == Pawn:
+                    if d.color:
+                        P[i, j] = 1
+                    else:
+                        p[i, j] = 1
+                elif type(d) == Rook:
+                    if d.color:
+                        R[i, j] = 1
+                    else:
+                        r[i, j] = 1
+                elif type(d) == Knight:
+                    if d.color:
+                        N[i, j] = 1
+                    else:
+                        n[i, j] = 1
+                elif type(d) == Bishop:
+                    if d.color:
+                        B[i, j] = 1
+                    else:
+                        self[i, j] = 1
+                elif type(d) == Queen:
+                    if d.color:
+                        Q[i, j] = 1
+                    else:
+                        q[i, j] = 1
+                elif type(d) == King:
+                    if d.color:
+                        K[i, j] = 1
+                    else:
+                        k[i, j] = 1
+        for arr in [P, R, N, B, Q, K, p, r, n, self, q, k]:
+            arr = arr.flatten(order='F')
+        piece_placement = np.concatenate([P, R, N, B, Q, K, p, r, n, self, q, k], dtype=np.int8)
+        extra_info = np.zeros(1 + 4 + 8 + 1, dtype=np.int8)
+        # active color: white=1, black=0
+        extra_info[0] = 1 if self.turn else 0
+
+        # castling rights
+        if "K" in self.castling_rights: extra_info[1] = 1
+        if "Q" in self.castling_rights: extra_info[2] = 1
+        if "k" in self.castling_rights: extra_info[3] = 1
+        if "q" in self.castling_rights: extra_info[4] = 1
+
+        # enpassant
+        extra_info[5 + self.enpassant] = 1 * (self.enpassant != -1)
+
+        # halfmove
+        extra_info[13] = self.halfmoves
+
+        return np.concatenate((piece_placement, extra_info), dtype=np.int8)
 
 
 def convert_fen(f):
@@ -701,7 +760,8 @@ def move_generation(b):
 
 
 def is_terminal(b):
-    return len(move_generation(b)) == 0
+    b.expand()
+    return len(b.possible_moves) == 0
 
 
 def result(b, turn):
