@@ -9,7 +9,7 @@ import datetime
 learning_rate = 1e-3
 batch_size = 20
 epochs = 10
-in_features = 8*8*12+2+4+8+1
+in_features = 8*8*12+1+4+8+1  # 782
 
 class ChessDataset(Dataset):
     def __init__(self, data_dir):
@@ -80,34 +80,6 @@ class Antonio:
             costs.append(loss)
         return costs
 
-    def selfplay(self, max_games):
-        for game in range(max_games):
-            white_game_pairs = []
-            black_game_pairs = []
-            game_over = False
-            side = True
-            while not game_over:
-                sa = np.array(self.mcts(board))
-                if side:
-                    white_game_pairs.append(sa)
-                else:
-                    black_game_pairs.append(sa)
-                board, game_over = self.next_move(sa[0], sa[1])
-                side = not side
-
-            if len(white_game_pairs) > len(black_game_pairs):
-                white_game_triples = np.stack((white_game_pairs, [1]*len(white_game_pairs)))
-                black_game_triples = np.stack((black_game_pairs, [0] * len(black_game_pairs)))
-            elif len(white_game_pairs) == len(black_game_pairs):
-                white_game_triples = np.stack((white_game_pairs, [0]*len(white_game_pairs)))
-                black_game_triples = np.stack((black_game_pairs, [1] * len(black_game_pairs)))
-            else:
-                print("numbers of rounds don't match up")
-
-            self.train(white_game_triples)
-            self.train(black_game_triples)
-        Antonio.save_triples()
-
     def next_move(self):
         next_board = []
         game_over = False
@@ -122,22 +94,20 @@ class Antonio:
     class NeuralNetwork(torch.nn.Module):
         def __init__(self):
             super().__init__()
-            self.flatten = torch.nn.Flatten()
             self.network = torch.nn.Sequential(
                 torch.nn.Linear(in_features, 512),
                 torch.nn.ReLU(),
                 torch.nn.Linear(512, 512),
                 torch.nn.ReLU(),
-                torch.nn.Linear(512, 10),
+                torch.nn.Linear(512, 1),
             )
 
         def forward(self, x):
-            x = self.flatten(x)
             logits = self.network(x)
             return logits
 
 
-lo_fn = torch.nn.MSELoss()
+lo_fn = torch.nn.NLLLoss()
 opt_fn = torch.optim.SGD
 
 train_dataloader = DataLoader(ChessDataset("/"), batch_size=batch_size, shuffle=True)
@@ -147,4 +117,4 @@ Antonio_1 = Antonio("")
 
 costs = Antonio_1.train_model(train_dataloader, learning_rate, lo_fn, opt_fn)
 
-Antonio_1.save_model('model.pth')
+Antonio_1.save_model(f'model_{datetime.datetime.now().strftime("%m%d%Y")}.pth')
