@@ -1,17 +1,24 @@
 import numpy as np
 from chess import Board, move_generation, is_terminal, result
+import pandas as pd
+import os
+
+
 class Node:
-    def __init__(self, board, father = None):
+    def __init__(self, board, father=None):
         self.state = board  # a BoardType object
         self.wins = 0
         self.father = father
         self.children = []
         self.visit_count = 0
+        self.children_is_found = False
 
     def find_children(self):
-        for child_state in move_generation(self.state.board):
+        self.state.board.expand()
+        for child_state in self.state.board.possible_moves:
             self.children.append(Node(child_state, self))
         self.children = np.array(self.children)
+        self.children_is_found = True
         # self.update_score()
         return self.children
 
@@ -19,8 +26,6 @@ class Node:
     #     for child in self.children:
     #         self.wins += child.wins
 
-    def children_is_found(self):
-        return len(self.children) != 0
 
 # an implementation of Monte Carlo Tree Search
 class MCT:
@@ -33,9 +38,10 @@ class MCT:
             simulation_result = MCT.rollout(leaf)
             MCT.backpropagate(leaf, simulation_result)
         return MCT.best_child(self.root)
+
     @staticmethod
     def select(node):
-        while node.children_is_found():
+        while node.children_is_found:
             node = MCT.best_child(node)
         if not is_terminal(node.state):
             for child in node.find_children():
@@ -46,17 +52,17 @@ class MCT:
 
     @staticmethod
     def expand(node):
-        if not node.children_is_found():
+        if not node.children_is_found:
             node.find_children()
 
-#    @staticmethod
-#    def expand(node, depth):
-#        if depth == 0: return
-#        else:
-#            if not node.children_is_found():
-#                node.find_children()
-#            for child in node.children:
-#                MCT.expand(child, depth-1)
+    #    @staticmethod
+    #    def expand(node, depth):
+    #        if depth == 0: return
+    #        else:
+    #            if not node.children_is_found():
+    #                node.find_children()
+    #            for child in node.children:
+    #                MCT.expand(child, depth-1)
 
     @staticmethod
     def rollout(node):
@@ -75,41 +81,56 @@ class MCT:
         MCT.backpropagate(node.father, not result)
 
     @staticmethod
-    def best_child(node, c_param = 1.0):
-        choices_weights = [(child.wins / child.visit_count) + c_param * np.sqrt((np.log(node.visit_count) / child.visit_count))
-                           for child in node.children
-                           ]  # UCT selection
+    def best_child(node, c_param=1.0):
+        choices_weights = [
+            (child.wins / child.visit_count) + c_param * np.sqrt((np.log(node.visit_count) / child.visit_count))
+            for child in node.children
+            ]  # UCT selection
         node.children[np.argmax(choices_weights)].visit_count += 1
         return node.children[np.argmax(choices_weights)]
 
 
-def find_best_solution(b, iter):
+def find_best_action(b, itrns):
     mct = MCT(b)
-    return mct.search(iter)
+    return mct.search(itrns).state
 
-def selfplay(self, max_games):
+
+def selfplay(max_games, starting_state="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"):
+    all_white_game_triples = []
+    all_black_game_triples = []
     for game in range(max_games):
         white_game_pairs = []
         black_game_pairs = []
         game_over = False
-        board = Board()
+        state = Board(starting_state)
         while not game_over:
-            sa = np.array(MCT(board))
-            if board.turn:
-                white_game_pairs.append(sa)
+            action = find_best_action(state, 100)
+            if state.turn:
+                white_game_pairs.append(np.array([state.to_bitboard(), action.to_bitboard()], dtype=np.int8))
             else:
-                black_game_pairs.append(sa)
-            board, game_over = self.next_move(sa[0], sa[1])
-            side = not side
-
-        if len(white_game_pairs) > len(black_game_pairs):
-            white_game_triples = np.stack((white_game_pairs, [1]*len(white_game_pairs)))
-            black_game_triples = np.stack((black_game_pairs, [0] * len(black_game_pairs)))
-        elif len(white_game_pairs) == len(black_game_pairs):
-            white_game_triples = np.stack((white_game_pairs, [0]*len(white_game_pairs)))
-            black_game_triples = np.stack((black_game_pairs, [1] * len(black_game_pairs)))
+                black_game_pairs.append(np.array([state.to_bitboard(), action.to_bitboard()], dtype=np.int8))
+            state, game_over = action, is_terminal(action)
+        if not state.turn:
+            white_game_triples = np.concatenate((white_game_pairs, np.ones((len(white_game_pairs), 2, 1))), axis=2,
+                                                dtype=np.int8)
+            black_game_triples = np.concatenate((black_game_pairs, np.zeros((len(black_game_pairs), 2, 1))), axis=2,
+                                                dtype=np.int8)
         else:
-            print("numbers of rounds don't match up")
+            white_game_triples = np.concatenate((white_game_pairs, np.zeros((len(white_game_pairs), 2, 1))), axis=2,
+                                                dtype=np.int8)
+            black_game_triples = np.concatenate((black_game_pairs, np.ones((len(black_game_pairs), 2, 1))), axis=2,
+                                                dtype=np.int8)
+        assert (white_game_triples.shape[2] == 783)
+        assert (black_game_triples.shape[2] == 783)
+        all_white_game_triples.append(white_game_triples)
+        all_black_game_triples.append(black_game_triples)
+    return np.concatenate(all_white_game_triples, dtype=np.int8), np.concatenate(all_black_game_triples, dtype=np.int8)
 
-        self.train(white_game_triples)
-        self.train(black_game_triples)
+
+def selfplay_and_save(max_games, path="./data",
+                      starting_state="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"):
+    white, black = selfplay(max_games, starting_state)
+    white = pd.DataFrame(white)
+    black = pd.DataFrame(black)
+    white.to_csv(os.path.join(path, "white_games.csv"))
+    black.to_csv(os.path.join(path, "black_games.csv"))
